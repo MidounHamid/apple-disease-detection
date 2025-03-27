@@ -5,15 +5,13 @@ import numpy as np
 from io import BytesIO
 from PIL import Image
 import tensorflow as tf
+import requests
 
 app = FastAPI()
-
 
 origins = [
     "http://localhost",
     "http://localhost:3000",
-    "http://localhost:5173",  #this is line for Vite
-
 ]
 app.add_middleware(
     CORSMiddleware,
@@ -23,28 +21,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+endpoint = "http://localhost:8501/v1/models/apples_model:predict"
 
-# Load your trained model
-
-
-# Load your trained model
-MODEL_PATH = "../models/1.keras"  # Update with the correct absolute path
-try:
-    MODEL = tf.keras.models.load_model(MODEL_PATH, compile=False)
-    print("Model loaded successfully!")
-except Exception as e:
-    print(f"Error loading model: {e}")
-    raise
-
-CLASS_NAMES = ['Alternaria leaf spot', 'Brown spot', 'Gray spot', 'Healthy leaf', 'Rust']# Update with your actual classes
-
-
-
-@app.get("/")
-async def home():
-    return {"message": "Welcome to Apple Disease Detection API"}
-
-
+CLASS_NAMES = ["Alternaria leaf spot", "Brown spot", "Gray spot", "Healthy leaf", "Rust"]
 
 @app.get("/ping")
 async def ping():
@@ -60,14 +39,20 @@ async def predict(
 ):
     image = read_file_as_image(await file.read())
     img_batch = np.expand_dims(image, 0)
-    
-    predictions = MODEL.predict(img_batch)
 
-    predicted_class = CLASS_NAMES[np.argmax(predictions[0])]
-    confidence = np.max(predictions[0])
+    json_data = {
+        "instances": img_batch.tolist()
+    }
+
+    response = requests.post(endpoint, json=json_data)
+    prediction = np.array(response.json()["predictions"][0])
+
+    predicted_class = CLASS_NAMES[np.argmax(prediction)]
+    confidence = np.max(prediction)
+
     return {
-        'class': predicted_class,
-        'confidence': float(confidence)
+        "class": predicted_class,
+        "confidence": float(confidence)
     }
 
 if __name__ == "__main__":
