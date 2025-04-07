@@ -30,6 +30,7 @@ app.add_middleware(
 
 # Load your trained model
 MODEL_PATH = "../models/1.keras"  # Update with the correct absolute path
+# MODEL_PATH = "../models/2.keras"
 try:
     MODEL = tf.keras.models.load_model(MODEL_PATH, compile=False)
     print("Model loaded successfully!")
@@ -39,6 +40,7 @@ except Exception as e:
 
 CLASS_NAMES = ['Alternaria leaf spot', 'Brown spot', 'Gray spot', 'Healthy leaf', 'Rust']# Update with your actual classes
 
+# CLASS_NAMES = ['Rust','Brown spot','Healt','Gray spot']
 
 
 @app.get("/")
