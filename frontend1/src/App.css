@@ -1,16 +1,55 @@
-Main Container
+:root {
+  --background-color: #f3f3f3;
+}
+
+body {
+  background-color: var(--background-color);
+}
+
+/* Main Styles */
 .upload-container {
   max-width: 800px;
-  margin: 0 auto;
+  max-height: 85vh;
+  margin: 1rem auto;
   padding: 2rem;
-  font-family: 'Segoe UI', sans-serif;
-  text-align: center;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
 h1 {
   color: #2c3e50;
-  margin-bottom: 2rem;
+  text-align: center;
+  margin-bottom: 1rem;
+  margin-top: 0;
+  font-weight: 600;
+  /* height: 60px; */
+  display: flex;
+  /* position: relative; */
 }
+
+/* API Status Indicator */
+.api-status {
+  padding: 0.5rem;
+  border-radius: 111px;
+  text-align: center;
+  margin-bottom: 0;
+  font-weight: 500;
+  width: 4%;
+}
+
+.api-status.online {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.api-status.offline {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+
 
 /* Dropzone Styles */
 .dropzone {
@@ -21,6 +60,7 @@ h1 {
   transition: all 0.3s ease;
   background-color: #f8f9fa;
   margin-bottom: 2rem;
+  text-align: center;
 }
 
 .dropzone.active {
@@ -46,35 +86,48 @@ h1 {
 
 /* Preview Section */
 .preview-section {
-  margin: 2rem 0;
+  margin: 1rem 0;
+  margin-bottom: 0.5rem;
+  text-align: center;
+  font-size: 12px;
+}
+
+/* Preview Section */
+p.preview-section {
+  color: #acadad;
 }
 
 .image-preview {
   position: relative;
   display: inline-block;
   max-width: 100%;
+  margin: 0 auto;
 }
 
 .image-preview img {
-  max-width: 100%;
-  max-height: 400px;
+  max-width: 90%;
+  height: 230px;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .clear-btn {
   position: absolute;
-  top: -10px;
-  right: -10px;
+  top: -18px;
+  right: -8px;
   background: #e74c3c;
   color: white;
   border: none;
   border-radius: 50%;
-  width: 30px;
-  height: 30px;
-  font-size: 1rem;
+  width: 36px;
+  height: 36px;
+  font-size: 1.2rem;
   cursor: pointer;
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .clear-btn:hover {
@@ -91,36 +144,97 @@ h1 {
 .result-card {
   background: white;
   border-radius: 10px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-  max-width: 500px;
+  padding: 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
+  background-color: var(--background-color);
+  width: 70%;
   margin: 0 auto;
 }
 
 .disease-name {
   font-size: 1.5rem;
   color: #2c3e50;
-  margin-bottom: 1rem;
-  font-weight: bold;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.disease-description {
+  color: #34495e;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
 }
 
 .confidence-meter {
-  background: #ecf0f1;
+  background: #ffffff;
   height: 10px;
   border-radius: 5px;
   margin: 1rem 0;
   overflow: hidden;
+  border: solid 1px #7f8c8d;
 }
 
 .confidence-bar {
   height: 100%;
-  background: linear-gradient(90deg, #2ecc71, #27ae60);
-  transition: width 0.5s ease;
+  /* transition: width 2s ease; */
 }
 
+
+
 .confidence-value {
-  color: #27ae60;
-  font-weight: bold;
+  color: #7f8c8d;
+  font-weight: 500;
+  margin-top: 0.5rem;
+}
+
+.treatment-info {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-top: 1.5rem;
+}
+
+.treatment-info h4 {
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+}
+
+.treatment-info p {
+  color: #34495e;
+  line-height: 1.5;
+}
+
+.alternative-predictions {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.alternative-predictions h4 {
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+}
+
+.alternative-predictions ul {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.alternative-predictions li {
+  padding: 0.3rem 0;
+  color: #34495e;
+}
+
+.result-footer {
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+.timestamp {
+  color: #95a5a6;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
 }
 
 /* Buttons */
@@ -128,25 +242,31 @@ button {
   background: #3498db;
   color: white;
   border: none;
-  padding: 0.8rem 1.5rem;
+  /* padding: 0.8rem 1.5rem; */
   border-radius: 6px;
   font-size: 1rem;
   cursor: pointer;
   transition: all 0.2s;
-  margin-top: 1rem;
+  font-weight: 500;
 }
 
 button:hover {
-  background: #2980b9;
+  background: #14963b;
   transform: translateY(-2px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .new-analysis-btn {
-  background: #3498db;
+  background: #15a441;
+  padding: 0.8rem 1.5rem;
 }
 
 .retry-btn {
   background: #e67e22;
+}
+
+.retry-btn:hover {
+  background: #d35400;
 }
 
 /* Loading Spinner */
@@ -154,27 +274,63 @@ button:hover {
   border: 4px solid rgba(0, 0, 0, 0.1);
   border-left-color: #3498db;
   border-radius: 50%;
-  width: 30px;
-  height: 30px;
+  width: 36px;
+  height: 36px;
   animation: spin 1s linear infinite;
   margin: 0 auto 1rem;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
 /* Error Message */
 .error-message {
-  background: #fdecea;
+  width: 70%;
+  background: #ffebee;
   color: #c62828;
   padding: 1rem;
   border-radius: 8px;
-  margin: 1rem 0;
+  margin: 1.5rem auto;
   animation: fadeIn 0.3s ease;
+  text-align: center;
+  transform: translateY(25px);
+}
+
+/* Animations */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    /* transform: translateY(7px); */
+  }
+  to {
+    opacity: 1;
+    /* transform: translateY(0); */
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .upload-container {
+    padding: 1.5rem;
+    padding-top: 1rem;
+    margin: 1rem;
+  }
+  
+  .dropzone {
+    padding: 2rem;
+  }
+  
+  .disease-name {
+    font-size: 1.3rem;
+  }
+}
+
+
+
+.title span {
+  margin-left: auto;
+  margin-right: auto;
 }

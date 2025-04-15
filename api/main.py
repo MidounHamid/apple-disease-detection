@@ -7,7 +7,7 @@ from PIL import Image
 import tensorflow as tf
 
 app = FastAPI()
-
+print("FastAPI server is starting...")
 
 origins = [
     "http://localhost",
@@ -41,7 +41,6 @@ except Exception as e:
 CLASS_NAMES = ['Alternaria leaf spot', 'Brown spot', 'Gray spot', 'Healthy leaf', 'Rust']# Update with your actual classes
 
 # CLASS_NAMES = ['Rust','Brown spot','Healt','Gray spot']
-
 
 @app.get("/")
 async def home():
