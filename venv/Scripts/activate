@@ -35,7 +35,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="C:\ismotica\project_programing\apple-disease-detection\venv"
+VIRTUAL_ENV="C:\ismotica\project_programing - Copie\apple-disease-detection\venv"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"

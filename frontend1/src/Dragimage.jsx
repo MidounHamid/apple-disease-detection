@@ -2,9 +2,11 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useDropzone } from "react-dropzone";
 import axios from "axios";
 import { Wifi, WifiOff } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import "./App.css";
 
 const Dragimage = () => {
+  const navigate = useNavigate();
   const API_URL =
     process.env.REACT_APP_API_URL || "http://localhost:8000/predict";
 
@@ -20,6 +22,16 @@ const Dragimage = () => {
   const [showCamera, setShowCamera] = useState(false);
   const videoRef = useRef(null);
   const streamRef = useRef(null);
+
+  // Check authentication on component mount
+  useEffect(() => {
+    const accessToken = localStorage.getItem("access_token");
+    if (!accessToken) {
+      // Redirect to login if not authenticated
+      navigate("/login");
+      return;
+    }
+  }, [navigate]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -65,8 +77,14 @@ const Dragimage = () => {
   // Configure dropzone
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
-    onDragEnter: () => setDragActive(true),
-    onDragLeave: () => setDragActive(false),
+    onDragEnter: () => {
+      console.log("Drag entered");
+      setDragActive(true);
+    },
+    onDragLeave: () => {
+      console.log("Drag left");
+      setDragActive(false);
+    },
     accept: { "image/*": [".jpeg", ".jpg", ".png"] },
     maxFiles: 1,
     disabled: isLoading,
@@ -99,7 +117,10 @@ const Dragimage = () => {
         formData.append("file", file);
 
         const response = await axios.post(API_URL, formData, {
-          headers: { "Content-Type": "multipart/form-data" },
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          },
           timeout: 30000,
         });
 
@@ -116,6 +137,17 @@ const Dragimage = () => {
       } catch (err) {
         let errorMessage = "Failed to analyze image. Please try again.";
         seTdropAble(0);
+
+        // Check for authentication errors
+        if (err.response && err.response.status === 401) {
+          // Token might be expired or invalid
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("user_id");
+          localStorage.removeItem("is_admin");
+          navigate("/login");
+          return;
+        }
+
         if (err.response) {
           errorMessage = err.response.data?.detail || errorMessage;
         } else if (err.message.includes("timeout")) {
@@ -126,12 +158,13 @@ const Dragimage = () => {
         }
 
         setError(errorMessage);
+        console.error("Prediction error:", err);
       } finally {
         setIsLoading(false);
       }
     };
     predictDisease();
-  }, [file, API_URL]);
+  }, [file, API_URL, navigate]);
 
   const resetAll = () => {
     setFile(null);
@@ -258,122 +291,153 @@ const Dragimage = () => {
     };
   }, []);
 
+  // Add console logs for debugging
+  useEffect(() => {
+    console.log("File state changed:", file);
+    console.log("Preview state:", preview);
+  }, [file, preview]);
+
   return (
-    <div className="upload-container">
-      <h1 className="title">
-        {apiStatus && (
-          <div
-            className={`api-status ${
-              apiStatus === "healthy" ? "online" : "offline"
-            }`}
-          >
-            {apiStatus === "offline" ? <WifiOff /> : <Wifi />}
-          </div>
-        )}
-        <span>Apple Disease Detection</span>
-        {/* {n}  */}
-      </h1>
-      {dropAble && !showCamera ? (
-        <>
-          <div
-            {...getRootProps()}
-            className={`dropzone ${dragActive ? "active" : ""} ${
-              isLoading ? "disabled" : ""
-            }`}
-          >
-            <input {...getInputProps()} />
-            {isLoading ? (
-              <div className="upload-status">
-                <div className="spinner"></div>
-                <p>Analyzing your image...</p>
-              </div>
-            ) : (
-              <>
-                {dragActive ? (
-                  <p>Drop the image here</p>
-                ) : (
-                  <p>Drag & drop apple leaf image, or click to browse</p>
-                )}
-                <p className="formats">Supports: JPG, PNG, JPEG (Max 10MB)</p>
-              </>
-            )}
-          </div>
+    <div className="drag-container">
+      {/* Add a logout button */}
+      <button
+        onClick={() => {
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("user_id");
+          localStorage.removeItem("is_admin");
+          navigate("/login");
+        }}
+        style={{ position: "absolute", top: 10, right: 10 }}
+      >
+        Logout
+      </button>
 
-          <button onClick={startCamera} className="camera-btn take-photo-btn">
-             Take Photo
-          </button>
-        </>
-      ) : null}
-
-      {preview && !isLoading && (
-        <div className="preview-section">
-          <div className="image-preview">
-            <img src={preview} alt="Selected apple leaf" />
-            <button onClick={resetAll} className="clear-btn">
-              X
-            </button>
-          </div>
-        </div>
-      )}
-
-      {error && (
-        <div className="error-message">
-          <p>⚠️ {error}</p>
-          <button onClick={resetAll} className="retry-btn">
-            Try Again
-          </button>
-        </div>
-      )}
-
-      {prediction && (
-        <div className="results-section">
-          <div
-            className="result-card"
-            style={{
-              borderLeft: `5px solid ${getDiseaseColor(prediction.class)}`,
-            }}
-          >
-            <p className="disease-name">{prediction.class}</p>
-
-            <div className="confidence-meter">
-              <div
-                className="confidence-bar"
-                style={{
-                  width: `${Math.min(prediction.confidence * 100, 100)}%`,
-                  backgroundColor: getDiseaseColor(prediction.class),
-                }}
-              />
+      <div className="upload-container">
+        <h1 className="title">
+          {apiStatus && (
+            <div
+              className={`api-status ${
+                apiStatus === "healthy" ? "online" : "offline"
+              }`}
+            >
+              {apiStatus === "offline" ? <WifiOff /> : <Wifi />}
+            </div>
+          )}
+          <span>Apple Disease Detection</span>
+          {/* {n}  */}
+        </h1>
+        {dropAble && !showCamera ? (
+          <>
+            <div
+              {...getRootProps()}
+              className={`dropzone ${dragActive ? "active" : ""} ${
+                isLoading ? "disabled" : ""
+              }`}
+            >
+              <input {...getInputProps()} />
+              {isLoading ? (
+                <div className="upload-status">
+                  <div className="spinner"></div>
+                  <p>Analyzing your image...</p>
+                </div>
+              ) : (
+                <>
+                  {dragActive ? (
+                    <p>Drop the image here</p>
+                  ) : (
+                    <p>Drag & drop apple leaf image, or click to browse</p>
+                  )}
+                  <p className="formats">Supports: JPG, PNG, JPEG (Max 10MB)</p>
+                </>
+              )}
             </div>
 
-            <p className="confidence-value">
-              Confidence: {(Number(prediction.confidence) * 100).toFixed(2)}%
-            </p>
-            <p className="preview-section">
-              Analyzed at: {prediction.timestamp}
-            </p>
-          </div>
+            <button onClick={startCamera} className="camera-btn take-photo-btn">
+              Take Photo
+            </button>
+          </>
+        ) : null}
 
-          <div className="result-footer">
-            <button onClick={resetAll} className="new-analysis-btn">
-              Analyze Another Image
-            </button>
+        {preview && !isLoading && (
+          <div className="preview-section">
+            <div className="image-preview">
+              <img
+                src={preview}
+                alt="Selected apple leaf"
+                onError={(e) => {
+                  console.error("Image preview error:", e);
+                  setError("Failed to load image preview");
+                }}
+              />
+              <button onClick={resetAll} className="clear-btn">
+                X
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {showCamera && (
-        <div className="camera-container">
-          <video ref={videoRef} autoPlay playsInline className="camera-video" />
-          <div className="camera-controls">
-            <button onClick={capturePhoto} className="camera-btn capture-btn">
-              Capture
-            </button>
-            <button onClick={stopCamera} className="camera-btn cancel-btn">
-              Cancel
-            </button>
+        {error && (
+          <div className="error" style={{ color: "red", marginBottom: "1rem" }}>
+            {error}
+            <button onClick={() => setError(null)}>Dismiss</button>
           </div>
-        </div>
-      )}
+        )}
+
+        {prediction && (
+          <div className="results-section">
+            <div
+              className="result-card"
+              style={{
+                borderLeft: `5px solid ${getDiseaseColor(prediction.class)}`,
+              }}
+            >
+              <p className="disease-name">{prediction.class}</p>
+
+              <div className="confidence-meter">
+                <div
+                  className="confidence-bar"
+                  style={{
+                    width: `${Math.min(prediction.confidence * 100, 100)}%`,
+                    backgroundColor: getDiseaseColor(prediction.class),
+                  }}
+                />
+              </div>
+
+              <p className="confidence-value">
+                Confidence: {(Number(prediction.confidence) * 100).toFixed(2)}%
+              </p>
+              <p className="preview-section">
+                Analyzed at: {prediction.timestamp}
+              </p>
+            </div>
+
+            <div className="result-footer">
+              <button onClick={resetAll} className="new-analysis-btn">
+                Analyze Another Image
+              </button>
+            </div>
+          </div>
+        )}
+
+        {showCamera && (
+          <div className="camera-container">
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              className="camera-video"
+            />
+            <div className="camera-controls">
+              <button onClick={capturePhoto} className="camera-btn capture-btn">
+                Capture
+              </button>
+              <button onClick={stopCamera} className="camera-btn cancel-btn">
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
