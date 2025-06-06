@@ -13,13 +13,14 @@ const Dragimage = () => {
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [prediction, setPrediction] = useState(null);
+  const [history, setHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [dragActive, setDragActive] = useState(false);
   const [apiStatus, setApiStatus] = useState(null);
   const [dropAble, seTdropAble] = useState(1);
-  const [n, setN] = useState(0);
   const [showCamera, setShowCamera] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const videoRef = useRef(null);
   const streamRef = useRef(null);
 
@@ -297,146 +298,210 @@ const Dragimage = () => {
     console.log("Preview state:", preview);
   }, [file, preview]);
 
+  // Add method to toggle sidebar
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed(!isSidebarCollapsed);
+  };
+
   return (
-    <div className="drag-container">
-      {/* Add a logout button */}
-      <button
-        onClick={() => {
-          localStorage.removeItem("access_token");
-          localStorage.removeItem("user_id");
-          localStorage.removeItem("is_admin");
-          navigate("/login");
-        }}
-        style={{ position: "absolute", top: 10, right: 10 }}
-      >
-        Logout
-      </button>
-
-      <div className="upload-container">
-        <h1 className="title">
-          {apiStatus && (
-            <div
-              className={`api-status ${
-                apiStatus === "healthy" ? "online" : "offline"
-              }`}
+    <div className="app-container">
+      {/* Left Side - History */}
+      <div className={`left-panel ${isSidebarCollapsed ? "collapsed" : ""}`}>
+        <button onClick={toggleSidebar} className="sidebar-toggle">
+          {isSidebarCollapsed ? (
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             >
-              {apiStatus === "offline" ? <WifiOff /> : <Wifi />}
-            </div>
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          ) : (
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
           )}
-          <span>Apple Disease Detection</span>
-          {/* {n}  */}
-        </h1>
-        {dropAble && !showCamera ? (
-          <>
-            <div
-              {...getRootProps()}
-              className={`dropzone ${dragActive ? "active" : ""} ${
-                isLoading ? "disabled" : ""
-              }`}
-            >
-              <input {...getInputProps()} />
-              {isLoading ? (
-                <div className="upload-status">
-                  <div className="spinner"></div>
-                  <p>Analyzing your image...</p>
-                </div>
-              ) : (
-                <>
-                  {dragActive ? (
-                    <p>Drop the image here</p>
-                  ) : (
-                    <p>Drag & drop apple leaf image, or click to browse</p>
-                  )}
-                  <p className="formats">Supports: JPG, PNG, JPEG (Max 10MB)</p>
-                </>
-              )}
-            </div>
-
-            <button onClick={startCamera} className="camera-btn take-photo-btn">
-              Take Photo
-            </button>
-          </>
-        ) : null}
-
-        {preview && !isLoading && (
-          <div className="preview-section">
-            <div className="image-preview">
-              <img
-                src={preview}
-                alt="Selected apple leaf"
-                onError={(e) => {
-                  console.error("Image preview error:", e);
-                  setError("Failed to load image preview");
-                }}
-              />
-              <button onClick={resetAll} className="clear-btn">
-                X
-              </button>
-            </div>
+        </button>
+        {!isSidebarCollapsed && (
+          <div className="history-container">
+            <h2 className="history-title">Detection History</h2>
+            {history.length === 0 ? (
+              <p className="empty-history">No detections yet.</p>
+            ) : (
+              <ul className="history-list">
+                {history.map((item, index) => (
+                  <li key={index} className="history-item">
+                    <div className="history-item-header">
+                      <span className="history-disease">{item.class}</span>
+                      <span className="history-confidence">
+                        {(Number(item.confidence) * 100).toFixed(2)}%
+                      </span>
+                    </div>
+                    <div className="history-timestamp">{item.timestamp}</div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         )}
+      </div>
 
-        {error && (
-          <div className="error" style={{ color: "red", marginBottom: "1rem" }}>
-            {error}
-            <button onClick={() => setError(null)}>Dismiss</button>
-          </div>
-        )}
+      {/* Right Side - Main Content */}
+      <div className="right-panel">
+        <div className="upload-container">
+          <h1 className="title">
+            {apiStatus && (
+              <div
+                className={`api-status ${
+                  apiStatus === "healthy" ? "online" : "offline"
+                }`}
+              >
+                {apiStatus === "offline" ? <WifiOff /> : <Wifi />}
+              </div>
+            )}
+            <span>Apple Disease Detection</span>
+          </h1>
 
-        {prediction && (
-          <div className="results-section">
-            <div
-              className="result-card"
-              style={{
-                borderLeft: `5px solid ${getDiseaseColor(prediction.class)}`,
-              }}
-            >
-              <p className="disease-name">{prediction.class}</p>
-
-              <div className="confidence-meter">
-                <div
-                  className="confidence-bar"
-                  style={{
-                    width: `${Math.min(prediction.confidence * 100, 100)}%`,
-                    backgroundColor: getDiseaseColor(prediction.class),
-                  }}
-                />
+          {/* Rest of the existing component remains the same */}
+          {dropAble && !showCamera ? (
+            <>
+              <div
+                {...getRootProps()}
+                className={`dropzone ${dragActive ? "active" : ""} ${
+                  isLoading ? "disabled" : ""
+                }`}
+              >
+                <input {...getInputProps()} />
+                {isLoading ? (
+                  <div className="upload-status">
+                    <div className="spinner"></div>
+                    <p>Analyzing your image...</p>
+                  </div>
+                ) : (
+                  <>
+                    {dragActive ? (
+                      <p>Drop the image here</p>
+                    ) : (
+                      <p>Drag & drop apple leaf image, or click to browse</p>
+                    )}
+                    <p className="formats">
+                      Supports: JPG, PNG, JPEG (Max 10MB)
+                    </p>
+                  </>
+                )}
               </div>
 
-              <p className="confidence-value">
-                Confidence: {(Number(prediction.confidence) * 100).toFixed(2)}%
-              </p>
-              <p className="preview-section">
-                Analyzed at: {prediction.timestamp}
-              </p>
-            </div>
+              <button
+                onClick={startCamera}
+                className="camera-btn take-photo-btn"
+              >
+                Take Photo
+              </button>
+            </>
+          ) : null}
 
-            <div className="result-footer">
-              <button onClick={resetAll} className="new-analysis-btn">
-                Analyze Another Image
-              </button>
+          {/* Rest of the component remains the same */}
+          {preview && !isLoading && (
+            <div className="preview-section">
+              <div className="image-preview">
+                <img
+                  src={preview}
+                  alt="Selected apple leaf"
+                  onError={(e) => {
+                    console.error("Image preview error:", e);
+                    setError("Failed to load image preview");
+                  }}
+                />
+                <button onClick={resetAll} className="clear-btn">
+                  X
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {showCamera && (
-          <div className="camera-container">
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              className="camera-video"
-            />
-            <div className="camera-controls">
-              <button onClick={capturePhoto} className="camera-btn capture-btn">
-                Capture
-              </button>
-              <button onClick={stopCamera} className="camera-btn cancel-btn">
-                Cancel
-              </button>
+          {error && (
+            <div
+              className="error"
+              style={{ color: "red", marginBottom: "1rem" }}
+            >
+              {error}
+              <button onClick={() => setError(null)}>Dismiss</button>
             </div>
-          </div>
-        )}
+          )}
+
+          {prediction && (
+            <div className="results-section">
+              <div
+                className="result-card"
+                style={{
+                  borderLeft: `5px solid ${getDiseaseColor(prediction.class)}`,
+                }}
+              >
+                <p className="disease-name">{prediction.class}</p>
+
+                <div className="confidence-meter">
+                  <div
+                    className="confidence-bar"
+                    style={{
+                      width: `${Math.min(prediction.confidence * 100, 100)}%`,
+                      backgroundColor: getDiseaseColor(prediction.class),
+                    }}
+                  />
+                </div>
+
+                <p className="confidence-value">
+                  Confidence: {(Number(prediction.confidence) * 100).toFixed(2)}
+                  %
+                </p>
+                <p className="preview-section">
+                  Analyzed at: {prediction.timestamp}
+                </p>
+              </div>
+
+              <div className="result-footer">
+                <button onClick={resetAll} className="new-analysis-btn">
+                  Analyze Another Image
+                </button>
+              </div>
+            </div>
+          )}
+
+          {showCamera && (
+            <div className="camera-container">
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                className="camera-video"
+              />
+              <div className="camera-controls">
+                <button
+                  onClick={capturePhoto}
+                  className="camera-btn capture-btn"
+                >
+                  Capture
+                </button>
+                <button onClick={stopCamera} className="camera-btn cancel-btn">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
