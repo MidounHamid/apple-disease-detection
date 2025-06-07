@@ -455,9 +455,7 @@ th {
   }
 
   .left-panel {
-    width: 100%;
-    height: auto;
-    position: relative;
+display: none;
   }
 
   .right-panel {
