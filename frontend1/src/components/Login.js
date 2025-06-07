@@ -1,19 +1,23 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import "../auth-styles.css"; // Import the new styles
 
 function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
 
     // Validate input
     if (!username || !password) {
       setError("Please enter both username and password");
+      setIsLoading(false);
       return;
     }
 
@@ -100,47 +104,67 @@ function Login() {
         // Something happened in setting up the request
         setError("An unexpected error occurred. Please try again.");
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="login-container">
-      <h2>Login</h2>
-      {error && (
-        <p className="error" style={{ color: "red" }}>
-          {error}
-        </p>
-      )}
-      <form onSubmit={handleLogin}>
-        <div>
-          <label>Username:</label>
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => {
-              setUsername(e.target.value);
-              setError(""); // Clear previous errors
-            }}
-            required
-          />
+    <div className="auth-container">
+      <div className="login-container">
+        <h2>Welcome Back</h2>
+        {error && (
+          <div className="error">
+            {error}
+          </div>
+        )}
+        <form onSubmit={handleLogin} className="auth-form">
+          <div className="form-group">
+            <label htmlFor="username">Username:</label>
+            <input
+              id="username"
+              type="text"
+              className="auth-input"
+              value={username}
+              onChange={(e) => {
+                setUsername(e.target.value);
+                setError(""); // Clear previous errors
+              }}
+              placeholder="Enter your username"
+              required
+              disabled={isLoading}
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="password">Password:</label>
+            <input
+              id="password"
+              type="password"
+              className="auth-input"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setError(""); // Clear previous errors
+              }}
+              placeholder="Enter your password"
+              required
+              disabled={isLoading}
+            />
+          </div>
+          <button 
+            type="submit" 
+            className={`auth-submit-btn ${isLoading ? 'auth-loading' : ''}`}
+            disabled={isLoading}
+          >
+            {isLoading ? 'Signing In...' : 'Sign In'}
+          </button>
+        </form>
+        <div className="auth-nav">
+          <p>
+            Don't have an account? <Link to="/signup">Create Account</Link>
+          </p>
         </div>
-        <div>
-          <label>Password:</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              setError(""); // Clear previous errors
-            }}
-            required
-          />
-        </div>
-        <button type="submit">Login</button>
-      </form>
-      <p>
-        Don't have an account? <a href="/signup">Sign Up</a>
-      </p>
+      </div>
     </div>
   );
 }
