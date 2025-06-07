@@ -4,8 +4,8 @@ import Login from "./components/Login";
 import Signup from "./components/Signup";
 import UserDashboard from "./components/UserDashboard";
 import AdminDashboard from "./components/AdminDashboard";
-import Dragimage from "./Dragimage";
-import "./App.css";
+import Dragimage from "./Dragimage.jsx";
+import HistoryPage from "./pages/HistoryPage";
 
 // Protected Route component
 const ProtectedRoute = ({ children, adminOnly = false }) => {
@@ -59,6 +59,9 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          <Route path="/" element={<Dragimage />} />
+          <Route path="/history" element={<HistoryPage />} />
 
           {/* Default route - redirect based on authentication */}
           <Route

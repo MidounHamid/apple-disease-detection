@@ -396,40 +396,49 @@ th {
 
 .history-list {
   list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
 .history-item {
-  background-color: #34495e;
-  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   padding: 12px;
-  margin-bottom: 10px;
-  transition: transform 0.2s;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  margin-bottom: 8px;
+  border-radius: 8px;
 }
 
-.history-item:hover {
-  transform: translateX(5px);
-  background-color: #3d5166;
+.history-image {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .history-item-header {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 5px;
+  align-items: center;
+  margin-top: 4px;
 }
 
 .history-disease {
-  font-weight: bold;
-  color: #ecf0f1;
+  font-weight: 600;
+  color: #ffffff;
 }
 
 .history-confidence {
-  color: #2ecc71;
-  font-weight: bold;
+  font-size: 0.9em;
+  color: #90caf9;
 }
 
 .history-timestamp {
-  font-size: 0.8rem;
-  color: #bdc3c7;
+  font-size: 0.8em;
+  color: #9e9e9e;
 }
 
 .right-panel {
