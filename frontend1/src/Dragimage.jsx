@@ -9,6 +9,8 @@ const Dragimage = ({ onDetectionComplete }) => {
   const navigate = useNavigate();
   const API_URL =
     process.env.REACT_APP_API_URL || "http://localhost:8000/predict";
+  const HISTORY_API_URL = 
+    process.env.REACT_APP_HISTORY_API_URL || "http://localhost:5000/history";
 
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -31,31 +33,85 @@ const Dragimage = ({ onDetectionComplete }) => {
       return;
     }
 
-    // Load history from localStorage on component mount
-    const savedHistory = localStorage.getItem("detection_history");
-    if (savedHistory) {
-      try {
-        setHistory(JSON.parse(savedHistory));
-      } catch (err) {
-        console.error("Failed to load history:", err);
-      }
-    }
+    // Load history from database on component mount
+    loadHistoryFromDatabase();
   }, [navigate]);
 
   useEffect(() => {
     const interval = setInterval(() => {
       checkApiStatus();
-    }, 5000); // Reduced frequency to avoid too many requests
+    }, 5000);
 
     return () => clearInterval(interval);
   }, []);
 
-  // Save history to localStorage whenever it changes
-  useEffect(() => {
-    if (history.length > 0) {
-      localStorage.setItem("detection_history", JSON.stringify(history));
+  // Load history from database
+  const loadHistoryFromDatabase = async () => {
+    try {
+      const token = localStorage.getItem("access_token");
+      const response = await axios.get(HISTORY_API_URL, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setHistory(response.data);
+    } catch (err) {
+      console.error("Failed to load history from database:", err);
+      // Fallback to localStorage if database fails
+      const savedHistory = localStorage.getItem("detection_history");
+      if (savedHistory) {
+        try {
+          setHistory(JSON.parse(savedHistory));
+        } catch (parseErr) {
+          console.error("Failed to parse local history:", parseErr);
+        }
+      }
     }
-  }, [history]);
+  };
+
+  // Save detection result to database
+  const saveToDatabase = async (file, prediction) => {
+    try {
+      const token = localStorage.getItem("access_token");
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("result", prediction.class);
+      formData.append("confidence", prediction.confidence.toString());
+
+      const response = await axios.post(HISTORY_API_URL, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      console.log("Successfully saved to database:", response.data);
+      
+      // Reload history from database to get the latest data
+      await loadHistoryFromDatabase();
+      
+      return response.data;
+    } catch (err) {
+      console.error("Failed to save to database:", err);
+      
+      // Fallback: save to localStorage if database fails
+      const newHistoryItem = {
+        id: Date.now(),
+        class: prediction.class,
+        timestamp: new Date().toLocaleString(),
+        confidence: prediction.confidence,
+        imageUrl: URL.createObjectURL(file),
+      };
+
+      setHistory((prevHistory) => {
+        const updatedHistory = [newHistoryItem, ...prevHistory];
+        localStorage.setItem("detection_history", JSON.stringify(updatedHistory));
+        return updatedHistory;
+      });
+
+      throw err; // Re-throw to handle in calling function
+    }
+  };
 
   // Check API status
   const checkApiStatus = async () => {
@@ -73,7 +129,7 @@ const Dragimage = ({ onDetectionComplete }) => {
   // Handle file drop
   const onDrop = useCallback((acceptedFiles) => {
     setDragActive(false);
-    setError(null); // Clear previous errors
+    setError(null);
     
     if (acceptedFiles.length === 0) {
       setError("No valid image file selected");
@@ -96,7 +152,7 @@ const Dragimage = ({ onDetectionComplete }) => {
 
     console.log("File selected:", selectedFile.name, selectedFile.type, selectedFile.size);
     setFile(selectedFile);
-    setPrediction(null); // Clear previous prediction
+    setPrediction(null);
   }, []);
 
   // Configure dropzone
@@ -127,7 +183,7 @@ const Dragimage = ({ onDetectionComplete }) => {
     return () => URL.revokeObjectURL(objectUrl);
   }, [file]);
 
-  // Submit to API - Fixed to prevent duplicate history entries
+  // Submit to API and save to database
   useEffect(() => {
     if (!file || isLoading) return;
 
@@ -162,20 +218,15 @@ const Dragimage = ({ onDetectionComplete }) => {
           };
 
           setPrediction(newPrediction);
-          
-          // Add to history only once here
-          setHistory((prevHistory) => {
-            // Check if this prediction already exists to prevent duplicates
-            const exists = prevHistory.some(item => 
-              item.timestamp === newPrediction.timestamp && 
-              item.class === newPrediction.class
-            );
-            
-            if (!exists) {
-              return [newPrediction, ...prevHistory];
-            }
-            return prevHistory;
-          });
+
+          // Save to database (this will also update the history state)
+          try {
+            await saveToDatabase(file, newPrediction);
+            console.log("Successfully saved detection result to database");
+          } catch (dbErr) {
+            console.warn("Database save failed, but continuing with local storage fallback");
+            // Error handling already done in saveToDatabase function
+          }
 
           if (onDetectionComplete) {
             onDetectionComplete(newPrediction);
@@ -188,7 +239,6 @@ const Dragimage = ({ onDetectionComplete }) => {
         
         let errorMessage = "Failed to analyze image. Please try again.";
 
-        // Handle different error types
         if (err.response) {
           console.error("Error response:", err.response.data);
           
@@ -334,13 +384,55 @@ const Dragimage = ({ onDetectionComplete }) => {
     }
   };
 
-  const clearHistory = () => {
-    setHistory([]);
-    localStorage.removeItem("detection_history");
+  const clearHistory = async () => {
+    try {
+      const token = localStorage.getItem("access_token");
+      
+      // Delete all history items from database
+      for (const item of history) {
+        try {
+          await axios.delete(`${HISTORY_API_URL}/${item.id}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+        } catch (err) {
+          console.error(`Failed to delete history item ${item.id}:`, err);
+        }
+      }
+      
+      // Clear local state and storage
+      setHistory([]);
+      localStorage.removeItem("detection_history");
+      
+      console.log("History cleared successfully");
+    } catch (err) {
+      console.error("Failed to clear history:", err);
+      // Fallback: clear local storage
+      setHistory([]);
+      localStorage.removeItem("detection_history");
+    }
   };
 
-  const deleteHistoryItem = (id) => {
-    setHistory(prevHistory => prevHistory.filter(item => item.id !== id));
+  const deleteHistoryItem = async (id) => {
+    try {
+      const token = localStorage.getItem("access_token");
+      
+      await axios.delete(`${HISTORY_API_URL}/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      // Remove from local state
+      setHistory(prevHistory => prevHistory.filter(item => item.id !== id));
+      
+      console.log(`History item ${id} deleted successfully`);
+    } catch (err) {
+      console.error(`Failed to delete history item ${id}:`, err);
+      // Fallback: remove from local state only
+      setHistory(prevHistory => prevHistory.filter(item => item.id !== id));
+    }
   };
 
   // Cleanup effect for camera
@@ -393,20 +485,26 @@ const Dragimage = ({ onDetectionComplete }) => {
               <ul className="history-list">
                 {history.map((item) => (
                   <li key={item.id} className="history-item">
-                    {item.imageUrl && (
+                    {(item.imageUrl || item.image_path) && (
                       <img
-                        src={item.imageUrl}
+                        src={item.imageUrl || `http://localhost:5000/uploads/images/${item.image_path?.split('/').pop()}`}
                         alt="Detection"
                         className="history-image"
+                        onError={(e) => {
+                          // Fallback if image doesn't load
+                          e.target.style.display = 'none';
+                        }}
                       />
                     )}
                     <div className="history-item-header">
-                      <span className="history-disease">{item.class}</span>
+                      <span className="history-disease">{item.class || item.disease_name}</span>
                       <span className="history-confidence">
                         {(Number(item.confidence) * 100).toFixed(2)}%
                       </span>
                     </div>
-                    <div className="history-timestamp">{item.timestamp}</div>
+                    <div className="history-timestamp">
+                      {item.timestamp || new Date(item.timestamp).toLocaleString()}
+                    </div>
                     <button
                       onClick={() => deleteHistoryItem(item.id)}
                       style={{
@@ -446,15 +544,14 @@ const Dragimage = ({ onDetectionComplete }) => {
             Logout
           </button>
           
-        {/* Add this button for mobile */}
-        <button 
-          className="mobile-history-button"
-          onClick={() => navigate('/history')}
-          aria-label="View History"
-          style={{ position: "absolute", top: 10, zIndex: 1000 }}
-        >
-          <History size={24} />
-        </button>
+          <button 
+            className="mobile-history-button"
+            onClick={() => navigate('/history')}
+            aria-label="View History"
+            style={{ position: "absolute", top: 10, zIndex: 1000 }}
+          >
+            <History size={24} />
+          </button>
 
           <div className="upload-container">
             <h1 className="title">
@@ -586,7 +683,6 @@ const Dragimage = ({ onDetectionComplete }) => {
             )}
           </div>
         </div>
-
       </div>
     </div>
   );

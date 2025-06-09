@@ -6,6 +6,7 @@ import UserDashboard from "./components/UserDashboard";
 import AdminDashboard from "./components/AdminDashboard";
 import Dragimage from "./Dragimage.jsx";
 import HistoryPage from "./pages/HistoryPage";
+import { AuthProvider } from "./context/AuthContext";
 
 // Protected Route component
 const ProtectedRoute = ({ children, adminOnly = false }) => {
@@ -27,63 +28,65 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
 
 function App() {
   return (
-    <BrowserRouter>
-      <div className="App">
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
+    <AuthProvider>
+      <BrowserRouter>
+        <div className="App">
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
 
-          <Route
-            path="/user-dashboard"
-            element={
-              <ProtectedRoute>
-                <UserDashboard />
-              </ProtectedRoute>
-            }
-          />
+            <Route
+              path="/user-dashboard"
+              element={
+                <ProtectedRoute>
+                  <UserDashboard />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route
-            path="/admin-dashboard"
-            element={
-              <ProtectedRoute adminOnly={true}>
-                <AdminDashboard />
-              </ProtectedRoute>
-            }
-          />
+            <Route
+              path="/admin-dashboard"
+              element={
+                <ProtectedRoute adminOnly={true}>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route
-            path="/detect"
-            element={
-              <ProtectedRoute>
-                <Dragimage />
-              </ProtectedRoute>
-            }
-          />
+            <Route
+              path="/detect"
+              element={
+                <ProtectedRoute>
+                  <Dragimage />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route path="/" element={<Dragimage />} />
-          <Route path="/history" element={<HistoryPage />} />
+            <Route path="/" element={<Dragimage />} />
+            <Route path="/history" element={<HistoryPage />} />
 
-          {/* Default route - redirect based on authentication */}
-          <Route
-            path="/"
-            element={
-              localStorage.getItem("access_token") ? (
-                localStorage.getItem("is_admin") === "true" ? (
-                  <Navigate to="/admin-dashboard" replace />
+            {/* Default route - redirect based on authentication */}
+            <Route
+              path="/"
+              element={
+                localStorage.getItem("access_token") ? (
+                  localStorage.getItem("is_admin") === "true" ? (
+                    <Navigate to="/admin-dashboard" replace />
+                  ) : (
+                    <Navigate to="/detect" replace />
+                  )
                 ) : (
-                  <Navigate to="/detect" replace />
+                  <Login />
                 )
-              ) : (
-                <Login />
-              )
-            }
-          />
+              }
+            />
 
-          {/* Catch-all route */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </div>
-    </BrowserRouter>
+            {/* Catch-all route */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </div>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 

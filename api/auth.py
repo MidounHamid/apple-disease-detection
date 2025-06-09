@@ -13,6 +13,9 @@ import logging
 import re
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
+from history import router as history_router
+from config import DB_CONFIG, SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
+from database import get_db_connection  # Import from database module
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -24,6 +27,9 @@ load_dotenv()
 # FastAPI app initialization
 app = FastAPI()
 
+# Include the history router
+app.include_router(history_router)
+
 # CORS Middleware
 app.add_middleware(
     CORSMiddleware,
@@ -32,19 +38,6 @@ app.add_middleware(
     allow_methods=["*"],  # Allows all methods
     allow_headers=["*"],  # Allows all headers
 )
-
-# Database Configuration
-DB_CONFIG = {
-    'host': os.getenv('DB_HOST', 'localhost'),
-    'user': os.getenv('DB_USER', 'root'),
-    'password': os.getenv('DB_PASSWORD', ''),
-    'database': os.getenv('DB_NAME', 'apple_disease_detection')
-}
-
-# Security Configuration
-SECRET_KEY = os.getenv('SECRET_KEY', 'your_secret_key')
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 # OAuth2 scheme
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -83,23 +76,6 @@ class UserResponse(BaseModel):
     username: str
     email: str
     is_admin: bool
-
-# Database Connection
-def get_db_connection():
-    try:
-        logger.info(f"Attempting to connect to database with config: {DB_CONFIG}")
-        connection = mysql.connector.connect(**DB_CONFIG)
-        logger.info("Database connection successful")
-        return connection
-    except Error as e:
-        logger.error(f"Database connection error: {e}")
-        raise HTTPException(
-            status_code=500, 
-            detail=f"Database connection error: {str(e)}. "
-                   f"Please check your database configuration. "
-                   f"Host: {DB_CONFIG['host']}, User: {DB_CONFIG['user']}, "
-                   f"Database: {DB_CONFIG['database']}"
-        )
 
 # Token Generation
 def create_access_token(data: dict):
@@ -212,13 +188,6 @@ async def login(user: UserLogin):
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        # Create login history
-        cursor.execute(
-            "INSERT INTO history (user_id, action_type, details) VALUES (%s, %s, %s)", 
-            (db_user['id'], 'login', 'Successful login')
-        )
-        conn.commit()
-
         # Create access token
         access_token = create_access_token(
             data={"sub": db_user['username'], "is_admin": db_user['is_admin']}
@@ -234,7 +203,6 @@ async def login(user: UserLogin):
         }
     
     except HTTPException:
-        # Re-raise HTTP exceptions
         raise
     except Error as e:
         logger.error(f"Database error during login: {e}")
@@ -278,4 +246,4 @@ async def get_all_users(token: str = Depends(oauth2_scheme)):
 # Main entry point
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=5000) 
+    uvicorn.run(app, host="0.0.0.0", port=5000)

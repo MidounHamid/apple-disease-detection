@@ -1,49 +1,55 @@
 # ----------------------------
 # Core ML and AI
 # ----------------------------
-tensorflow==2.15.0
-numpy>=1.21.0,<1.26.0
-pillow>=9.0.0,<11.0.0
+tensorflow==2.12.0
+numpy==1.23.5
+pillow==9.5.0
 matplotlib>=3.5.0,<4.0.0
 
 # ----------------------------
 # Web Framework
 # ----------------------------
-fastapi==0.109.2
-uvicorn==0.27.1
+fastapi==0.95.1
+uvicorn==0.22.0
 starlette==0.36.3
 gunicorn==20.1.0
 
 # ----------------------------
 # File Handling
 # ----------------------------
-python-multipart==0.0.9
+python-multipart==0.0.6
 
 # ----------------------------
 # Database
 # ----------------------------
-mysql-connector-python==8.0.28
+mysql-connector-python==8.0.33
 sqlalchemy==2.0.25
 
 # ----------------------------
 # Authentication and Security
 # ----------------------------
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
+python-jose==3.3.0
+passlib==1.7.4
 bcrypt==4.1.2
 
 # ----------------------------
 # Data Validation
 # ----------------------------
-pydantic==1.10.13
+pydantic==1.10.7
 email-validator==2.1.1
 
 # ----------------------------
 # Configuration
 # ----------------------------
-python-dotenv==0.20.0
+python-dotenv==1.0.0
 
 # ----------------------------
 # HTTP Requests
 # ----------------------------
 requests==2.31.0
+werkzeug==2.3.3
+
+# ----------------------------
+# Additional Dependencies
+# ----------------------------
+uuid==1.30

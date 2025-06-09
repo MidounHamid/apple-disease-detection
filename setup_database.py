@@ -49,13 +49,14 @@ def create_database_and_tables():
         # Create History Table
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS history (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            user_id INT,
-            action_type VARCHAR(50) NOT NULL,
-            details TEXT,
-            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users(id)
-        )
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    disease_name VARCHAR(100) NOT NULL,
+    confidence FLOAT NOT NULL,            
+    image_path VARCHAR(255) NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
         """)
         print("History table created successfully")
         
