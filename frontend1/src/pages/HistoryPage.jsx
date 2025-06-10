@@ -187,16 +187,18 @@ const HistoryPage = () => {
   // FIXED: Improved image URL generation with better debugging
   const getImageUrl = (item) => {
     if (!item.image_path) {
-      console.warn("No image path provided:", item);
       return null;
     }
 
-    const filename = item.image_path.split(/[\/\\]/).pop();
-    const imageUrl = `${BASE_URL}/uploads/images/${filename}`;
+    // Ensure path uses forward slashes and remove any leading slash
+    const normalizedPath = item.image_path
+      .replace(/\\/g, "/")
+      .replace(/^\/+/, "");
+    const imageUrl = `${BASE_URL}/${normalizedPath}`;
 
     console.log("Generated image URL:", {
       original: item.image_path,
-      filename: filename,
+      normalized: normalizedPath,
       url: imageUrl,
     });
 
@@ -405,11 +407,11 @@ const HistoryPage = () => {
                                 justify-content: center; 
                                 background: #f5f5f5; 
                                 color: #666; 
-                                border-radius: 12px;
-                                flex-direction: column;
-                                gap: 8px;
-                                padding: 20px;
-                                text-align: center;
+                                border-radius: "12px";
+                                flex-direction: "column";
+                                gap: "8px";
+                                padding: "20px";
+                                text-align: "center";
                               `;
                               errorDiv.innerHTML = `
                                 <div style="font-size: 32px;">📷</div>

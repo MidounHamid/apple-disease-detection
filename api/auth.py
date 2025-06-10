@@ -16,6 +16,8 @@ from datetime import datetime, timedelta
 from history import router as history_router
 from config import DB_CONFIG, SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from database import get_db_connection  # Import from database module
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -242,6 +244,9 @@ async def get_all_users(token: str = Depends(oauth2_scheme)):
     finally:
         cursor.close()
         conn.close()
+
+# Mount the uploads directory
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # Main entry point
 if __name__ == "__main__":

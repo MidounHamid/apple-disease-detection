@@ -9,6 +9,7 @@ from config import SECRET_KEY, ALGORITHM, UPLOAD_DIR
 from database import get_db_connection
 import os
 import logging
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -35,16 +36,18 @@ async def create_history(
         if not username:
             raise HTTPException(status_code=401, detail="Invalid token")
         
-        # Save uploaded file
+        # Save uploaded file using pathlib for consistent path handling
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"{timestamp}_{file.filename}"
-        file_path = os.path.join(UPLOAD_DIR, filename)
+        file_path = Path(UPLOAD_DIR) / filename
         
-        with open(file_path, "wb") as buffer:
-            content = await file.read()
-            buffer.write(content)
+        # Save the file
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        file_content = await file.read()
+        file_path.write_bytes(file_content)
         
-        logger.info(f"File saved to: {file_path}")
+        # Store relative path with forward slashes in database
+        db_path = str(Path("uploads/images") / filename).replace("\\", "/")
         
         # Save to database
         conn = get_db_connection()
@@ -62,7 +65,7 @@ async def create_history(
             INSERT INTO history (user_id, disease_name, confidence, image_path) 
             VALUES (%s, %s, %s, %s)
             """,
-            (user['id'], result, confidence, file_path)
+            (user['id'], result, confidence, db_path)
         )
         conn.commit()
         

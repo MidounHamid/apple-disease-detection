@@ -11,6 +11,7 @@ const Dragimage = ({ onDetectionComplete }) => {
     process.env.REACT_APP_API_URL || "http://localhost:8000/predict";
   const HISTORY_API_URL = 
     process.env.REACT_APP_HISTORY_API_URL || "http://localhost:5000/history";
+  const BASE_URL = process.env.REACT_APP_BASE_URL || "http://localhost:5000";
 
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -487,7 +488,7 @@ const Dragimage = ({ onDetectionComplete }) => {
                   <li key={item.id} className="history-item">
                     {(item.imageUrl || item.image_path) && (
                       <img
-                        src={item.imageUrl || `http://localhost:5000/uploads/images/${item.image_path?.split('/').pop()}`}
+                        src={item.imageUrl || `${BASE_URL}/uploads/images/${item.image_path?.split('/').pop()}`}
                         alt="Detection"
                         className="history-image"
                         onError={(e) => {
